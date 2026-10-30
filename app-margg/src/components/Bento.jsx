@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { community, screens } from "../content"
+import { reveal } from "../reveal"
 
 function Flame() {
   return (
@@ -20,14 +21,14 @@ function Flame() {
 const days = ["Mon", "Tue", "Wed", "Thu"]
 
 // Each card flies in from the right with its own delay when `show` turns on
-export default function Bento({ show = true, animated = true }) {
+// mode "stage": driven by the pinned story (`show`). mode "flow": ordinary cards that animate in as they scroll into view.
+export default function Bento({ show = true, mode = "stage" }) {
   const card = (i) =>
-    animated
-      ? { initial: false, animate: { opacity: show ? 1 : 0, x: show ? 0 : 80, y: show ? 0 : 24 }, transition: { duration: 0.6, delay: show ? 0.12 + i * 0.08 : 0, ease: [0.22, 1, 0.36, 1] } }
-      : {}
-
+    mode === "flow"
+      ? reveal(i % 2, 50)
+      : { initial: false, animate: { opacity: show ? 1 : 0, x: show ? 0 : 80, y: show ? 0 : 24 }, transition: { duration: 0.6, delay: show ? 0.12 + i * 0.08 : 0, ease: [0.22, 1, 0.36, 1] } }
   return (
-    <div className="bento">
+    <div className={"bento" + (mode === "flow" ? " flow" : "")}>
      <div className="brow brow-1">
       <motion.article className="bcard b-roadmap" {...card(0)}>
         <h3>Roadmap Based Learning</h3>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { animate, motion, useInView } from "framer-motion"
 import { hero, stats } from "../content"
 import { reveal } from "../reveal"
-import { useReducedMotion } from "../hooks"
+import { useMedia, useReducedMotion } from "../hooks"
 
 function CountUp({ value, suffix }) {
   const ref = useRef(null)
@@ -38,6 +38,7 @@ export default function Hero() {
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)
   const reduced = useReducedMotion()
+  const cols = useMedia("(max-width: 720px)") ? 3 : 4 // grid columns, so the highlight knows which side to grow towards
 
   // The highlight walks through the tiles on a loop
   useEffect(() => {
@@ -54,10 +55,10 @@ export default function Hero() {
           <h1>{hero.title}</h1>
           <p>{hero.text}</p>
         </motion.div>
-        <motion.div className="tiles" {...reveal(2, 50)} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <motion.div className="tiles" style={{ "--cols": cols }} {...reveal(2, 50)} onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
           {hero.tiles.map((t, i) => {
             const on = i === active
-            const flip = i % 4 === 3 // last column: the highlight grows leftwards so it stays inside the grid
+            const flip = i % cols === cols - 1 // last column: the highlight grows leftwards so it stays inside the grid
             return (
               <button
                 key={i}

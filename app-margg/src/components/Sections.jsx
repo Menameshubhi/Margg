@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
+import { useMedia } from "../hooks"
 import Fit from "./Fit"
 import { reveal } from "../reveal"
 import { motion } from "framer-motion"
@@ -73,23 +74,50 @@ export function Contact() {
   const [role, setRole] = useState(null)
   const [sent, setSent] = useState(false)
   const formRef = useRef(null)
+  const phone = useMedia("(max-width: 720px)")
   const r = role === null ? null : roles[role]
   const submit = (e) => { e.preventDefault(); setSent(true) }
 
-  // Runs after the form has rendered, so the scroll target exists
-  useEffect(() => {
-    if (role === null || !formRef.current) return
-    const y = formRef.current.getBoundingClientRect().top + window.scrollY - 110
-    window.scrollTo({ top: y, behavior: "smooth" })
-  }, [role])
+  // Desktop / tablet: scroll to the form. Phone: the form opens right under the chosen card, so scroll to that card.
+  const scrollToTarget = () => {
+    const el = phone ? document.querySelector(".role.is-on") : formRef.current
+    if (!el) return
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - (phone ? 96 : 110), behavior: "smooth" })
+  }
+  // Runs after the form has rendered, so the target exists
+  useEffect(() => { if (role !== null) scrollToTarget() }, [role])
 
   const pick = (i) => {
     setSent(false)
-    if (i === role) { // same card again: just take us back to the form
-      const y = formRef.current.getBoundingClientRect().top + window.scrollY - 110
-      window.scrollTo({ top: y, behavior: "smooth" })
-    } else setRole(i)
+    if (i === role) scrollToTarget() // same card again: just take us back to the form
+    else setRole(i)
   }
+
+  const formEl = r && (
+    <div ref={formRef} data-snap data-snap-offset="110" className="form-wrap">
+      <motion.form className="form" onSubmit={submit} key={r.key} {...reveal(0, 30)}>
+        <h3>Drop your details</h3>
+        <p className="form-sub">We will contact you real soon!</p>
+        <div className="fields">
+          {r.fields.map((f) => (
+            <label key={f.name}>
+              <span>{f.label}</span>
+              {f.options ? (
+                <select name={f.name} defaultValue={f.options[0]}>{f.options.map((o) => <option key={o}>{o}</option>)}</select>
+              ) : (
+                <input name={f.name} type={f.type || "text"} placeholder={f.placeholder} required />
+              )}
+            </label>
+          ))}
+        </div>
+        <label className="check"><input type="checkbox" defaultChecked /><i aria-hidden="true" />{r.newsletter}</label>
+        <div className="form-foot">
+          <button className="btn-white" type="submit">Submit</button>
+          {sent && <span role="status" className="sent">Thanks! We’ll be in touch shortly.</span>}
+        </div>
+      </motion.form>
+    </div>
+  )
 
   return (
     <section id="contact" data-snap className="contact">
@@ -101,11 +129,14 @@ export function Contact() {
 
       <motion.div className="roles" role="group" aria-label="Who are you? Pick one to open its form" {...reveal(1)}>
         {roles.map((x, i) => (
-          <button key={x.key} className={"role" + (i === role ? " is-on" : "")} aria-pressed={i === role} onClick={() => pick(i)}>
-            <RoleIcon kind={x.icon} />
-            <h3>{x.title}</h3>
-            <p>{x.text}</p>
-          </button>
+          <Fragment key={x.key}>
+            <button className={"role" + (i === role ? " is-on" : "")} aria-pressed={i === role} onClick={() => pick(i)}>
+              <RoleIcon kind={x.icon} />
+              <h3>{x.title}</h3>
+              <p>{x.text}</p>
+            </button>
+            {phone && i === role && formEl}
+          </Fragment>
         ))}
       </motion.div>
 
@@ -115,31 +146,7 @@ export function Contact() {
         ))}
       </svg>
 
-      {r && (
-        <div ref={formRef} data-snap data-snap-offset="110" className="form-wrap">
-          <motion.form className="form" onSubmit={submit} key={r.key} {...reveal(0, 30)}>
-            <h3>Drop your details</h3>
-            <p className="form-sub">We will contact you real soon!</p>
-            <div className="fields">
-              {r.fields.map((f) => (
-                <label key={f.name}>
-                  <span>{f.label}</span>
-                  {f.options ? (
-                    <select name={f.name} defaultValue={f.options[0]}>{f.options.map((o) => <option key={o}>{o}</option>)}</select>
-                  ) : (
-                    <input name={f.name} type={f.type || "text"} placeholder={f.placeholder} required />
-                  )}
-                </label>
-              ))}
-            </div>
-            <label className="check"><input type="checkbox" defaultChecked /><i aria-hidden="true" />{r.newsletter}</label>
-            <div className="form-foot">
-              <button className="btn-white" type="submit">Submit</button>
-              {sent && <span role="status" className="sent">Thanks! We’ll be in touch shortly.</span>}
-            </div>
-          </motion.form>
-        </div>
-      )}
+      {!phone && formEl}
     </section>
   )
 }

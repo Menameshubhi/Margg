@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import Navbar from "./components/Navbar"
 import Hero, { Stats } from "./components/Hero"
-import Story, { STAGES } from "./components/Story"
+import Story from "./components/Story"
 import { Contact, Download, Footer, Testimonials } from "./components/Sections"
 
 const top = (el) => el.getBoundingClientRect().top + window.scrollY
@@ -13,18 +13,20 @@ function stepPositions() {
   document.querySelectorAll("[data-snap-stages]").forEach((el) => {
     const y = top(el)
     const range = el.offsetHeight - window.innerHeight
-    for (let k = 0; k < STAGES; k++) ys.push(k === 0 ? y : y + (range * (k + 0.5)) / STAGES)
+    const n = Number(el.dataset.snapStages)
+    for (let k = 0; k < n; k++) ys.push(k === 0 ? y : y + (range * (k + 0.5)) / n)
   })
   return ys.sort((a, b) => a - b)
 }
 
 // One scroll (wheel tick, swipe or key press) moves exactly one step, like the prototype.
-// Only on desktop widths; phones and tablets keep native scrolling.
-function usePaging() {
+// Only on desktop widths (over 1024px); tablets and phones keep native scrolling and scroll-driven animation.
+function usePaging(enabled) {
   useEffect(() => {
+    if (!enabled) return
     const NEXT = ["ArrowDown", "ArrowRight", "PageDown"]
     const PREV = ["ArrowUp", "ArrowLeft", "PageUp"]
-    const wide = () => window.innerWidth > 900
+    const wide = () => window.innerWidth > 1024
     let stepAt = 0
     const go = (dir) => {
       const ys = stepPositions()
@@ -91,11 +93,11 @@ function usePaging() {
       window.removeEventListener("touchmove", onTouchMove)
       window.removeEventListener("touchend", onTouchEnd)
     }
-  }, [])
+  }, [enabled])
 }
 
 export default function App() {
-  usePaging()
+  usePaging(true)
   return (
     <>
       <Navbar />
